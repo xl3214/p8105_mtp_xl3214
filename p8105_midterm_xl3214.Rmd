@@ -9,22 +9,29 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r library necessary R packages, message = FALSE, echo = FALSE}
+library(dplyr)
 ```
 
-## Including Plots
+## Raw Data Overview and Report Goal
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r Import data, message = FALSE, echo = FALSE, results = 'hide'}
+coa <- readxl::read_excel("USPS\ CHANGE\ OF\ ADDRESS\ NYC.xlsx")
+summary(coa)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We are looking at the USPS Change of Address NYC dataset. The raw dataset has `r ncol(coa)` variables and `r nrow(coa)` observations. Variables include: 
+
+* **`r colnames(coa[,1])`**: variable type ``r class(pull(coa, var = 1))``, range `r min(pull(coa, var = 1))` to `r max(pull(coa, var = 1))`, mean = `r mean(pull(coa, var = 1))`.
+
+* **`r colnames(coa[,2])`**: variable type ``r class(pull(coa, var = 2))``, range `r min(pull(coa, var = 2))` to `r max(pull(coa, var = 2))`, mean = `r mean(pull(coa, var = 2))`.
+
+* **`r colnames(coa[,3])`**: variable type ``r class(pull(coa, var = 3))``, there are `r list(count(distinct(coa[,3])))` distinct entries for this variable.
+
+* **`r colnames(coa[,4])`**: variable type ``r class(pull(coa, var = 4))``, range `r min(pull(coa, var = 4))` to `r max(pull(coa, var = 4))`, mean = `r mean(pull(coa, var = 4))`.
+
+* **`r list(colnames(coa[,5]))`**: variable type ``r class(pull(coa, var = 5))``, range `r min(pull(coa, var = 5))` to `r max(pull(coa, var = 5))`, mean = `r mean(pull(coa, var = 5))`.
+
+
+
+Import, tidy, combine, and otherwise clean the data. In the ZIP code data, create a borough variable using county names. When importing COA data, add a year variable for later use; also, create a net_change variable by subtracting outbound COAs from inbound COAs. Resolve any issues that arise when merging COA and ZIP code data. Restrict your dataset to only variables necessary for later parts of this report. Describe the major steps in the data wrangling process in words, including what steps you took to address data quality issues.
