@@ -11,27 +11,37 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r library necessary R packages, message = FALSE, echo = FALSE}
 library(dplyr)
+library(tidyr)
 ```
 
 ## Raw Data Overview and Report Goal
 
 ```{r Import data, message = FALSE, echo = FALSE, results = 'hide'}
 coa <- readxl::read_excel("USPS\ CHANGE\ OF\ ADDRESS\ NYC.xlsx")
+zip <- read.csv("Zip Codes.csv")
 summary(coa)
+summary(zip)
 ```
 
-We are looking at the USPS Change of Address NYC dataset. The raw dataset has `r ncol(coa)` variables and `r nrow(coa)` observations. Variables include: 
-
-* **`r colnames(coa[,1])`**: variable type ``r class(pull(coa, var = 1))``, range `r min(pull(coa, var = 1))` to `r max(pull(coa, var = 1))`, mean = `r mean(pull(coa, var = 1))`.
-
-* **`r colnames(coa[,2])`**: variable type ``r class(pull(coa, var = 2))``, range `r min(pull(coa, var = 2))` to `r max(pull(coa, var = 2))`, mean = `r mean(pull(coa, var = 2))`.
-
-* **`r colnames(coa[,3])`**: variable type ``r class(pull(coa, var = 3))``, there are `r list(count(distinct(coa[,3])))` distinct entries for this variable.
-
-* **`r colnames(coa[,4])`**: variable type ``r class(pull(coa, var = 4))``, range `r min(pull(coa, var = 4))` to `r max(pull(coa, var = 4))`, mean = `r mean(pull(coa, var = 4))`.
-
-* **`r list(colnames(coa[,5]))`**: variable type ``r class(pull(coa, var = 5))``, range `r min(pull(coa, var = 5))` to `r max(pull(coa, var = 5))`, mean = `r mean(pull(coa, var = 5))`.
+The raw USPS Change of Address NYC dataset has `r ncol(coa)` variables and `r nrow(coa)` observations. The raw Zip Codes dataset has `r ncol(zip)` variables and `r nrow(zip)` observations.
 
 
+```{r Clean and Tidy and Combine the Datasets}
+coa <- readxl::read_excel("USPS\ CHANGE\ OF\ ADDRESS\ NYC.xlsx") |>
+  janitor::clean_names() |>
+  rename(zip_code = zipcode) |>
+  mutate(year = lubridate::year(month)) |>
+  mutate(net_change = total_perm_in - total_perm_out) 
+# pivot_wider(names_from = month, values_from = c(net_change, total_perm_in, total_perm_out))
+zip <- read.csv("Zip Codes.csv") |> 
+  janitor::clean_names() |> 
+  mutate(borough = county_name) |>
+  filter(!(zip_code == 10463 & county_name == "New York"))
+tidy <- merge(coa, zip, by = "zip_code", all.x = TRUE)
 
-Import, tidy, combine, and otherwise clean the data. In the ZIP code data, create a borough variable using county names. When importing COA data, add a year variable for later use; also, create a net_change variable by subtracting outbound COAs from inbound COAs. Resolve any issues that arise when merging COA and ZIP code data. Restrict your dataset to only variables necessary for later parts of this report. Describe the major steps in the data wrangling process in words, including what steps you took to address data quality issues.
+
+summary(tidy)
+```
+
+
+Import, tidy, combine, and otherwise clean the data. In the ZIP code data, create a borough variable using county names. Resolve any issues that arise when merging COA and ZIP code data. Restrict your dataset to only variables necessary for later parts of this report. Describe the major steps in the data wrangling process in words, including what steps you took to address data quality issues.
