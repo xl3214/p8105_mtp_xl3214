@@ -19,11 +19,9 @@ library(ggplot2)
 ```
 
 ## Report Overview
-
 ```{r Import data, message = FALSE, echo = FALSE, results = 'hide'}
 file_path <- "USPS CHANGE OF ADDRESS NYC.xlsx"
 sheet_names <- excel_sheets(file_path)
-
 data_frames <- lapply(sheet_names, function(sheet_name) {
   read_excel(file_path, sheet = sheet_name)
 })
