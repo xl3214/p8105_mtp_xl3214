@@ -1,5 +1,5 @@
 ---
-title: "p8105_midterm_xl3214"
+title: "p8105_mtp_xl3214"
 author: "Xuan Lu"
 date: "2023-10-19"
 output: github_document
@@ -286,6 +286,6 @@ Mean of Neighborhood-Level Average Net Change, Grouped by year:
 The dataset has limitations, including data quality issues, borough mismatches, many-to-many relationships, limited time range, local influences, and potential seasonal patterns. It lacks demographic and socioeconomic data. Thorough preprocessing and data integration are needed for a holistic view of population changes.
 
 ```{r Word Count, message=FALSE}
-wordcountaddin::text_stats("p8105_midterm_xl3214.Rmd")
+wordcountaddin::text_stats("p8105_mtp_xl3214.Rmd")
 ```
 
