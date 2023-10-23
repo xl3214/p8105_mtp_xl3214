@@ -10,14 +10,24 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r library necessary R packages, message = FALSE, echo = FALSE}
-library(dplyr)
 library(tidyr)
+library(readxl)
+library(dplyr)
+library(janitor)
+library(lubridate)
 ```
 
 ## Raw Data Overview and Report Goal
 
 ```{r Import data, message = FALSE, echo = FALSE, results = 'hide'}
-coa <- readxl::read_excel("USPS\ CHANGE\ OF\ ADDRESS\ NYC.xlsx")
+file_path <- "USPS CHANGE OF ADDRESS NYC.xlsx"
+sheet_names <- excel_sheets(file_path)
+
+data_frames <- lapply(sheet_names, function(sheet_name) {
+  read_excel(file_path, sheet = sheet_name)
+})
+
+coa <- bind_rows(data_frames)
 zip <- read.csv("Zip Codes.csv")
 summary(coa)
 summary(zip)
@@ -26,22 +36,115 @@ summary(zip)
 The raw USPS Change of Address NYC dataset has `r ncol(coa)` variables and `r nrow(coa)` observations. The raw Zip Codes dataset has `r ncol(zip)` variables and `r nrow(zip)` observations.
 
 
-```{r Clean and Tidy and Combine the Datasets}
-coa <- readxl::read_excel("USPS\ CHANGE\ OF\ ADDRESS\ NYC.xlsx") |>
-  janitor::clean_names() |>
+```{r Clean and Tidy and Combine the Datasets, results='hide', message=FALSE, warning=FALSE}
+file_path <- "USPS CHANGE OF ADDRESS NYC.xlsx"
+sheet_names <- excel_sheets(file_path)
+
+data_frames <- lapply(sheet_names, function(sheet_name) {
+  read_excel(file_path, sheet = sheet_name)
+})
+
+coa <- bind_rows(data_frames) |>
+  clean_names() |>
   rename(zip_code = zipcode) |>
-  mutate(year = lubridate::year(month)) |>
-  mutate(net_change = total_perm_in - total_perm_out) 
-# pivot_wider(names_from = month, values_from = c(net_change, total_perm_in, total_perm_out))
+  mutate(year = year(month)) |>
+  mutate(net_change = total_perm_in - total_perm_out)
+
 zip <- read.csv("Zip Codes.csv") |> 
   janitor::clean_names() |> 
-  mutate(borough = county_name) |>
-  filter(!(zip_code == 10463 & county_name == "New York"))
-tidy <- merge(coa, zip, by = "zip_code", all.x = TRUE)
+  mutate(borough = county_name)
 
+test1 <- anti_join(coa, zip, by = "zip_code") # 0 observations of 7 variables
+test2 <- left_join(coa, zip, by = "zip_code") # 12085 observations of 14 variables
+test3 <- right_join(coa, zip, by = "zip_code") # 12168 observations of 14 variables
+test4 <- inner_join(coa, zip, by = "zip_code") # 12085 observations of 14 variables
+test5 <- full_join(coa, zip, by = "zip_code") # 12168 observations of 14 variables
+# Proceeding with left_join because we only want those with a record on "USPS Change of Address NYC" dataset to be included in the final dataset. Comparing the observations of left_join with inner_join, we can also notice that all records on coa dataset is present in zip dataset.
+rm(test1, test2, test3, test4, test5)
 
+tidy <- left_join(coa, zip, by = "zip_code") # 12085 observations of 14 variables
+# Warning: Detected an unexpected many-to-many relationship between `x` and `y`.
+# Need to go back and edit the codes to keep a one-to-many relationship between coa and zip. 
+
+# Create a data frame indicating duplicated combinations of month and zip_code
+coa_duplicated <- coa |>
+  group_by(month, zip_code) |>
+  filter(duplicated(month, zip_code))
+print(coa_duplicated)
+# No duplicated combinations of month and zip_code in coa dataset.
+
+# Create a data frame indicating duplicated combinations of zip_code and neighborhood
+zip_duplicated <- zip |>
+  group_by(zip_code, neighborhood) |>
+  filter(duplicated(zip_code, neighborhood))
+print(zip_duplicated)
+# Four duplicated combinations of zip_code and neighborhood in coa dataset: 10463, 11201, 11239, 11693
+zip |> filter(zip_code %in% c(10463, 11201, 11239, 11693))
+# Seems like the four zip codes have been categorized into more than one county. Check the unique county names in zip dataset.
+unique(pull(zip, county_name))
+# Seems like "New York" is of Borough "Manhattan", "Kings" is of Borough "Brooklyn", and "Richmond" is of Borough "Staten Island".
+zip <- zip |> 
+  mutate(borough = ifelse(county_name == "Kings", "Brooklyn",
+                     ifelse(county_name == "Richmond", "Staten Island",
+                            ifelse(county_name == "New York", "Manhattan", borough))))
+unique(pull(zip, borough))
+
+# Fixing duplicates of zip codes 10463, 11201, 11239, and 11693
+zip <- zip |> 
+  mutate(
+    county_name = case_when(
+      zip_code == 10463 ~ "Bronx", # Code 10463 as Bronx county
+      zip_code %in% c(11201, 11239) ~ "Kings", # Code 11201 and 11239 as Kings county
+      zip_code == 11693 ~ "Queens", # Code 11693 as Queens county
+      TRUE ~ county_name),  # Leave other rows as they are
+    borough = case_when(
+      zip_code %in% c(11201, 11239) ~ "Brooklyn",
+      TRUE ~ borough))  # Leave other rows as they are
+# Delete duplicates
+zip <- zip |>
+  distinct(zip_code, .keep_all = TRUE)
+# Checking for one last time
+zip |> filter(zip_code %in% c(10463, 11201, 11239, 11693))
+# No more duplicates. Now there should not be many-to-many relationships when merging.
+
+tidy <- left_join(coa, zip, by = "zip_code")
+
+# Since the coa dataset should only be consisted of NYC residents, and all of its zip codes are found in the zip dataset, the "city" variable exists for no reason. However, I will first check if there are NAs in the neighborhood information from zip. 
+zip |> filter(is.na(neighborhood)) # 142 NAs in neighborhood variable in zip dataset
+tidy |> filter(is.na(neighborhood)) # 1288 NAs in neighborhood variable in tidy dataset
+
+# I will keep the "city" variable as I suspect neighborhoods might be errorly entered into it. 
 summary(tidy)
 ```
 
+After cleaning, tidying, combining, and joining the datasets, the final tidy dataset has `r ncol(tidy)` columns and `r nrow(tidy)` rows. Variables include: 
 
-Import, tidy, combine, and otherwise clean the data. In the ZIP code data, create a borough variable using county names. Resolve any issues that arise when merging COA and ZIP code data. Restrict your dataset to only variables necessary for later parts of this report. Describe the major steps in the data wrangling process in words, including what steps you took to address data quality issues.
+* **`r colnames(tidy[,1])`**: variable type ``r class(pull(tidy, var = 1))``. Entries example: `r head(unique(pull(tidy, var = 1)))`.
+
+* **`r colnames(tidy[,2])`**: variable type ``r class(pull(tidy, var = 2))``. Entries example: `r head(unique(pull(tidy, var = 2)))`. There are `r length(unique(pull(tidy, var = 2)))` unique entries in this variable.
+
+* **`r colnames(tidy[,3])`**: variable type ``r class(pull(tidy, var = 3))``. Entries example: `r head(unique(pull(tidy, var = 3)))`. There are `r length(unique(pull(tidy, var = 3)))` unique entries in this variable.
+
+* **`r colnames(tidy[,4])`**: variable type ``r class(pull(tidy, var = 4))``, range `r min(pull(tidy, var = 4))` to `r max(pull(tidy, var = 4))`, mean = `r mean(pull(tidy, var = 4))`.
+
+* **`r colnames(tidy[,5])`**: variable type ``r class(pull(tidy, var = 5))``, range `r min(pull(tidy, var = 5))` to `r max(pull(tidy, var = 5))`, mean = `r mean(pull(tidy, var = 5))`.
+
+* **`r colnames(tidy[,6])`**: variable type ``r class(pull(tidy, var = 6))``. Entries example: `r head(unique(pull(tidy, var = 6)))`. There are `r length(unique(pull(tidy, var = 6)))` unique entries in this variable.
+
+* **`r colnames(tidy[,7])`**: variable type ``r class(pull(tidy, var = 7))``, range `r min(pull(tidy, var = 7))` to `r max(pull(tidy, var = 7))`, mean = `r mean(pull(tidy, var = 7))`.
+
+* **`r colnames(tidy[,8])`**: variable type ``r class(pull(tidy, var = 8))``. Entries example: `r head(unique(pull(tidy, var = 8)))`. There are `r length(unique(pull(tidy, var = 8)))` unique entries in this variable.
+
+* **`r colnames(tidy[,9])`**: variable type ``r class(pull(tidy, var = 9))``. Entries example: `r head(unique(pull(tidy, var = 9)))`. There are `r length(unique(pull(tidy, var = 9)))` unique entries in this variable.
+
+* **`r colnames(tidy[,10])`**: variable type ``r class(pull(tidy, var = 10))``. Entries example: `r head(unique(pull(tidy, var = 10)))`. There are `r length(unique(pull(tidy, var = 10)))` unique entries in this variable.
+
+* **`r colnames(tidy[,11])`**: variable type ``r class(pull(tidy, var = 11))``. Entries example: `r head(unique(pull(tidy, var = 11)))`. There are `r length(unique(pull(tidy, var = 11)))` unique entries in this variable.
+
+* **`r colnames(tidy[,12])`**: variable type ``r class(pull(tidy, var = 12))``. Entries example: `r head(unique(pull(tidy, var = 12)))`. There are `r length(unique(pull(tidy, var = 12)))` unique entries in this variable.
+
+* **`r colnames(tidy[,13])`**: variable type ``r class(pull(tidy, var = 13))``. Entries example: `r head(unique(pull(tidy, var = 13)))`. There are `r length(unique(pull(tidy, var = 13)))` unique entries in this variable. Additionally, there are `r sum(is.na(tidy[, 13]))` missing entries in this variable.
+
+* **`r colnames(tidy[,14])`**: variable type ``r class(pull(tidy, var = 14))``. Entries example: `r head(unique(pull(tidy, var = 14)))`. There are `r length(unique(pull(tidy, var = 14)))` unique entries in this variable.
+
+
