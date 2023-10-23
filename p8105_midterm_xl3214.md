@@ -5,6 +5,20 @@ Xuan Lu
 
 ## Raw Data Overview and Report Goal
 
+The goal of this project is to analyze ZIP code-level population changes
+in New York City (NYC) using the USPS Change of Address (COA) dataset
+and ZIP code data. By employing data cleaning, tidying, merging, and
+exploratory data analysis (EDA) techniques, we aim to gain a
+comprehensive understanding of the trends and patterns in population
+changes across NYC’s boroughs and neighborhoods over a five-year period.
+Our objective is to identify neighborhoods and boroughs that have
+experienced significant population shifts, investigate data quality
+issues, and provide insights into potential demographic trends driving
+these changes. Through the project’s deliverables, we seek to contribute
+valuable insights into address change patterns, demographic dynamics,
+and the quality of the dataset, addressing its limitations and
+highlighting opportunities for further analysis and research.
+
 The raw USPS Change of Address NYC dataset has 5 variables and 11845
 observations. The raw Zip Codes dataset has 7 variables and 324
 observations.
@@ -327,3 +341,172 @@ Addressing this may involve considering data sources, local context, and
 statistical methods for imputing missing values.
 
 ## EDA and Visualization
+
+``` r
+# Group and summarize data to calculate the average net_change by year and borough
+avg_net_change_table <- tidy |>
+  group_by(year, borough) |>
+  summarize(avg_net_change = mean(net_change, na.rm = TRUE))
+```
+
+    ## `summarise()` has grouped output by 'year'. You can override using the
+    ## `.groups` argument.
+
+``` r
+# View the resulting table
+avg_net_change_table |> knitr::kable()
+```
+
+| year | borough       | avg_net_change |
+|-----:|:--------------|---------------:|
+| 2018 | Bronx         |     -46.303333 |
+| 2018 | Brooklyn      |     -46.184265 |
+| 2018 | Manhattan     |     -41.967422 |
+| 2018 | Queens        |     -26.640479 |
+| 2018 | Staten Island |      -9.846154 |
+| 2019 | Bronx         |     -48.016667 |
+| 2019 | Brooklyn      |     -51.683230 |
+| 2019 | Manhattan     |     -52.784773 |
+| 2019 | Queens        |     -29.291275 |
+| 2019 | Staten Island |      -9.125000 |
+| 2020 | Bronx         |     -72.653333 |
+| 2020 | Brooklyn      |    -110.672065 |
+| 2020 | Manhattan     |    -126.434610 |
+| 2020 | Queens        |     -48.284367 |
+| 2020 | Staten Island |     -10.544828 |
+| 2021 | Bronx         |     -66.100000 |
+| 2021 | Brooklyn      |     -76.838115 |
+| 2021 | Manhattan     |     -38.975504 |
+| 2021 | Queens        |     -45.371778 |
+| 2021 | Staten Island |     -22.548611 |
+| 2022 | Bronx         |     -53.190000 |
+| 2022 | Brooklyn      |     -55.377593 |
+| 2022 | Manhattan     |     -46.588055 |
+| 2022 | Queens        |     -30.778542 |
+| 2022 | Staten Island |     -16.298611 |
+
+The table shows trends in average net_change by borough and year:
+
+- Net changes fluctuated annually, with 2020 and 2019 experiencing
+  significant decreases.
+
+- Brooklyn consistently had the highest negative net_change, followed by
+  Manhattan.
+
+- Staten Island had the least negative net_change, indicating stability.
+
+- The Bronx and Queens showed varying net_change, reflecting population
+  fluctuations.
+
+- The impact of the COVID-19 pandemic in 2020 resulted in more
+  pronounced negative values.
+
+- These trends may reflect demographic shifts, housing patterns, and
+  external factors. Further analysis is needed to understand the
+  specific drivers.
+
+``` r
+# Five lowest values of net_change across all observed data
+lowest_net_change_all <- tidy |>
+  arrange(net_change) |>
+  mutate(month = month(month)) |>
+  select(zip_code, neighborhood, year, month, net_change) |>
+  head(5)
+
+# Display the resulting tables
+lowest_net_change_all |> knitr::kable()
+```
+
+| zip_code | neighborhood                  | year | month | net_change |
+|---------:|:------------------------------|-----:|------:|-----------:|
+|    10022 | Gramercy Park and Murray Hill | 2020 |     5 |       -983 |
+|    10009 | Lower East Side               | 2020 |     7 |       -919 |
+|    10016 | Gramercy Park and Murray Hill | 2020 |     6 |       -907 |
+|    10016 | Gramercy Park and Murray Hill | 2020 |     7 |       -855 |
+|    10009 | Lower East Side               | 2020 |     6 |       -804 |
+
+``` r
+# Five highest values of net_change before 2020
+highest_net_change_before_2020 <- tidy |>
+  filter(year < 2020) |>
+  arrange(desc(net_change)) |>
+  mutate(month = month(month)) |>
+  select(zip_code, neighborhood, year, month, net_change) |>
+  head(5)
+
+# Display the resulting tables
+highest_net_change_before_2020 |> knitr::kable()
+```
+
+| zip_code | neighborhood        | year | month | net_change |
+|---------:|:--------------------|-----:|------:|-----------:|
+|    11101 | Northwest Queens    | 2018 |     4 |        360 |
+|    11101 | Northwest Queens    | 2018 |     6 |        344 |
+|    11101 | Northwest Queens    | 2018 |     5 |        300 |
+|    10001 | Chelsea and Clinton | 2018 |     7 |        225 |
+|    11201 | Northwest Brooklyn  | 2018 |     4 |        217 |
+
+``` r
+# Calculate neighborhood-level average net_change by month
+neighborhood_avg <- tidy |>
+  group_by(borough, neighborhood, year, month) |>
+  summarize(avg_net_change = mean(net_change))
+```
+
+    ## `summarise()` has grouped output by 'borough', 'neighborhood', 'year'. You can
+    ## override using the `.groups` argument.
+
+``` r
+# Create a line plot to visualize the trends
+neighborhood_avg |>
+  ggplot(aes(x = month, y = avg_net_change, color = borough, group = borough)) +
+  geom_point(alpha = 0.15) +
+  geom_smooth(se = FALSE) + 
+  labs(title = "Neighborhood-Level Average Net Change Over 5 Years",
+       x = "Month", y = "Average Net Change", color = "Borough") +
+  theme_minimal() +
+  theme_light() + 
+  theme(legend.position = "bottom")
+```
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+![](p8105_midterm_xl3214_files/figure-gfm/Visualizations-1.png)<!-- -->
+
+``` r
+ggsave("results/neighborhood_avg_net_change_scatter_line_plot.png", width = 8, height = 4)
+```
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+The graph shows Neighborhood-Level Average Net Change to be mostly below
+zero across all boroughs, over 5 years. The mean net change is
+-51.8521739.
+
+After grouping by borough, the mean of the Neighborhood-Level Average
+Net Change over five years is -58.4132937 for Bronx, -66.0864957 for
+Brooklyn, -83.1492555 for Manhattan, -34.0814803 for Queens, and
+-19.9383126 for Staten Island. Overall, Manhattan has the lowest average
+net change, while Staten Island has the highest average net change.
+
+After grouping by month, the mean of the Neighborhood-Level Average Net
+Change is -41.6273371 for 2018, -45.3431172 for 2019, -95.8952273 for
+2020, -57.2484641 for 2021, and -46.412256 for 2022. Neighborhood-Level
+Average Net Change is relatively constant for year 2018, 2019, and 2022.
+Between 2020 and 2021, there has been a significant drop of
+Neighborhood-Level Average Net Change across all boroughs, but most
+significantly in the Manhattan borough.
+
+## Conclusion & Limitations
+
+The dataset used to analyze ZIP code-level population changes has
+limitations, including data quality issues, borough-to-city mismatches,
+data transformation challenges, many-to-many relationships, missing
+neighborhood information, a limited temporal scope, the influence of
+local context and external factors, and the potential for seasonal or
+temporary patterns. The dataset may not capture demographic diversity,
+and it lacks information on demographic and socioeconomic
+characteristics. These limitations underscore the need for careful data
+preprocessing, consideration of local context, and integration with
+other data sources to provide a comprehensive understanding of
+population changes at the ZIP code level.
