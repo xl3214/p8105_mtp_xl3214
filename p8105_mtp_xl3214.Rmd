@@ -6,6 +6,8 @@ output:
     css: styles.css
 ---
 
+[Go Back](github_projects.html) 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
