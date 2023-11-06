@@ -1,8 +1,9 @@
 ---
-title: "p8105_mtp_xl3214"
-author: "Xuan Lu"
-date: "2023-10-19"
-output: github_document
+title: "NYC Zip Code Level Population Changes"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    css: styles.css
 ---
 
 ```{r setup, include=FALSE}
@@ -32,7 +33,7 @@ summary(coa)
 summary(zip)
 ```
 
-This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. I cleaned, merged, and performed exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations.
+This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. Raw data are imported from [HERE](https://p8105.com/data/USPS%20CHANGE%20OF%20ADDRESS%20NYC.xlsx). Since COA may not accurately reflect NYC’s counties, boroughs, and neighborhoods, a supplementary Zip Codes (ZIP) dataset is imported from [HERE](https://p8105.com/data/Zip%20Codes.csv). I cleaned, merged, and performed exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations.
 
 ## Data Wrangling
 
@@ -132,7 +133,8 @@ rm(objects_to_remove, all_objects)
 
 # Keep only variables needed for further analysis
 tidy <- tidy |> 
-  select(year, month, city, borough, county_name, neighborhood, total_perm_out, total_perm_in, net_change, zip_code)
+  select(year, month, city, borough, county_name, neighborhood, total_perm_out, total_perm_in, net_change, zip_code) |> 
+  mutate(zip_code = as.character(zip_code))
 ```
 
 Data preparation involved importing files and combining sheets in COA. Column names were cleaned, and new variables (`year` and `net_change` in COA, `borough` in ZIP) were created. Various joining methods were compared for data consistency. A `left_join` merged COA and ZIP, warning many-to-many relationships. Checks were conducted for duplicates in COA and ZIP. `borough` names were updated, and duplicates for specific zip codes were addressed. 
@@ -209,7 +211,7 @@ There are `r count(le60)` ZIP codes with less than 60 observations, and `r count
 
 ## EDA and Visualization
 
-### Average Net Change Table, by year and borough
+#### Average Net Change Table, by year and borough
 ```{r Summary Table, message=FALSE, warning=FALSE, echo=FALSE}
 # Group and summarize data to calculate the average net_change by year and borough
 avg_net_change_table <- tidy |>
@@ -223,7 +225,7 @@ avg_net_change_table |> knitr::kable()
 
 The table reveals trends in average net change by borough and year. Annual fluctuations, particularly significant decreases in 2020, are observed. Brooklyn consistently exhibits the highest negative average net change, contrasting with Staten Island's stability. The Bronx and Queens display varying average net change, reflecting population fluctuations, possibly influenced by the COVID-19 pandemic in 2020. These trends may stem from demographic shifts and housing patterns.
 
-### Five lowest values of net change across all observed data
+#### Five lowest values of net change across all observed data
 ```{r Table showing five lowest values of net_change across all observed data, message=FALSE, warning=FALSE, echo=FALSE}
 # Five lowest values of net_change across all observed data
 lowest_net_change_all <- tidy |>
@@ -236,7 +238,7 @@ lowest_net_change_all <- tidy |>
 lowest_net_change_all |> knitr::kable()
 ```
 
-### Five highest values of net change before 2020
+#### Five highest values of net change before 2020
 ```{r Table showing five highest values of net_change before 2020, message=FALSE, warning=FALSE, echo=FALSE}
 # Five highest values of net_change before 2020
 highest_net_change_before_2020 <- tidy |>
@@ -250,7 +252,7 @@ highest_net_change_before_2020 <- tidy |>
 highest_net_change_before_2020 |> knitr::kable()
 ```
 
-### Trend plot of neighborhood-level average net change by month
+#### Trend plot of neighborhood-level average net change by month
 ```{r Visualizations, message=FALSE, warning=FALSE, echo=FALSE}
 # Calculate neighborhood-level average net_change by month
 neighborhood_avg <- tidy |>
