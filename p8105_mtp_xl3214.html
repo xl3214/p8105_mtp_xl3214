@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 <div id="post">
 <article class="post-content">
-<div id="report-overview" class="section level2">
-<h2>Report Overview</h2>
+<div id="project-overview" class="section level2">
+<h2>Project Overview</h2>
 <p>This project examines NYC ZIP code-level population changes using
 USPS Change of Address (COA) data. Raw data are imported from <a href="https://p8105.com/data/USPS%20CHANGE%20OF%20ADDRESS%20NYC.xlsx">HERE</a>.
 Since COA may not accurately reflect NYC’s counties, boroughs, and
@@ -72,7 +72,10 @@ merged, and performed exploratory analysis to identify population
 shifts, investigate data quality, and reveal demographic trends while
 addressing dataset limitations. The raw COA dataset contains 5 variables
 and 11845 observations, while the raw Zip Codes dataset includes 7
-variables and 324 observations.</p>
+variables and 324 observations. For this project, I utilized R version
+4.3.1, and R packages <code>tidyr</code>, <code>readxl</code>,
+<code>dplyr</code>, <code>janitor</code>, <code>lubridate</code>, and
+<code>ggplot2</code>.</p>
 </div>
 <div id="data-wrangling" class="section level2">
 <h2>Data Wrangling</h2>
@@ -974,23 +977,23 @@ needed for a holistic view of population changes.</p>
 <tbody>
 <tr class="odd">
 <td align="left">Word count</td>
-<td align="left">533</td>
-<td align="left">527</td>
+<td align="left">552</td>
+<td align="left">543</td>
 </tr>
 <tr class="even">
 <td align="left">Character count</td>
-<td align="left">3837</td>
-<td align="left">3837</td>
+<td align="left">3958</td>
+<td align="left">3958</td>
 </tr>
 <tr class="odd">
 <td align="left">Sentence count</td>
-<td align="left">59</td>
+<td align="left">62</td>
 <td align="left">Not available</td>
 </tr>
 <tr class="even">
 <td align="left">Reading time</td>
+<td align="left">2.8 minutes</td>
 <td align="left">2.7 minutes</td>
-<td align="left">2.6 minutes</td>
 </tr>
 </tbody>
 </table>

@@ -19,7 +19,7 @@ library(lubridate)
 library(ggplot2)
 ```
 
-## Report Overview
+## Project Overview
 ```{r Import data, message = FALSE, echo = FALSE, results = 'hide'}
 file_path <- "USPS CHANGE OF ADDRESS NYC.xlsx"
 sheet_names <- excel_sheets(file_path)
@@ -33,7 +33,7 @@ summary(coa)
 summary(zip)
 ```
 
-This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. Raw data are imported from [HERE](https://p8105.com/data/USPS%20CHANGE%20OF%20ADDRESS%20NYC.xlsx). Since COA may not accurately reflect NYC’s counties, boroughs, and neighborhoods, a supplementary Zip Codes (ZIP) dataset is imported from [HERE](https://p8105.com/data/Zip%20Codes.csv). I cleaned, merged, and performed exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations.
+This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. Raw data are imported from [HERE](https://p8105.com/data/USPS%20CHANGE%20OF%20ADDRESS%20NYC.xlsx). Since COA may not accurately reflect NYC’s counties, boroughs, and neighborhoods, a supplementary Zip Codes (ZIP) dataset is imported from [HERE](https://p8105.com/data/Zip%20Codes.csv). I cleaned, merged, and performed exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations. For this project, I utilized R version 4.3.1, and R packages `tidyr`, `readxl`, `dplyr`, `janitor`, `lubridate`, and `ggplot2`. 
 
 ## Data Wrangling
 
