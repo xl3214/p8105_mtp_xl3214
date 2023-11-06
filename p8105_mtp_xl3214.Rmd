@@ -32,11 +32,11 @@ summary(coa)
 summary(zip)
 ```
 
-This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. We clean, merge, and perform exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations.
+This project examines NYC ZIP code-level population changes using USPS Change of Address (COA) data. I cleaned, merged, and performed exploratory analysis to identify population shifts, investigate data quality, and reveal demographic trends while addressing dataset limitations. The raw COA dataset contains `r ncol(coa)` variables and `r nrow(coa)` observations, while the raw Zip Codes dataset includes `r ncol(zip)` variables and `r nrow(zip)` observations.
 
 ## Data Wrangling
 
-```{r Clean and Tidy and Combine the Datasets, results='hide', message=FALSE, warning=FALSE}
+```{r Clean and Tidy and Combine the Datasets, results='hide', message=FALSE, warning=FALSE, echo=FALSE}
 # Define file paths and read data from Excel and CSV files
 file_path <- "USPS CHANGE OF ADDRESS NYC.xlsx"
 sheet_names <- excel_sheets(file_path)
@@ -115,10 +115,6 @@ zip |> filter(zip_code %in% c(10463, 11201, 11239, 11693))
 # Merge COA and ZIP data
 tidy <- left_join(coa, zip, by = "zip_code")
 
-# Check for NAs in 'neighborhood' in both ZIP and tidy datasets
-zip |> filter(is.na(neighborhood)) # 142 NAs in neighborhood variable in ZIP dataset
-tidy |> filter(is.na(neighborhood)) # 1288 NAs in neighborhood variable in tidy dataset
-
 summary(tidy)
 
 # List of objects to keep
@@ -139,78 +135,96 @@ tidy <- tidy |>
   select(year, month, city, borough, county_name, neighborhood, total_perm_out, total_perm_in, net_change, zip_code)
 ```
 
-Logic to clean the datasets is as follows:
-
-Data preparation involved importing files and combining sheets in "coa". Column names were cleaned, and new variables ("year" and "net_change" in "coa," "borough" in "zip") were created. Various joining methods were compared for data consistency. A "left_join" merged "coa" and "zip," warning many-to-many relationships. Checks were conducted for duplicates in "coa" and "zip." "Borough" names were updated, and duplicates for specific zip codes were addressed. NAs in "neighborhood" were reviewed in both "zip" and merged "tidy" datasets.
+Data preparation involved importing files and combining sheets in COA. Column names were cleaned, and new variables (`year` and `net_change` in COA, `borough` in ZIP) were created. Various joining methods were compared for data consistency. A `left_join` merged COA and ZIP, warning many-to-many relationships. Checks were conducted for duplicates in COA and ZIP. `borough` names were updated, and duplicates for specific zip codes were addressed. 
 
 The final tidy dataset has `r ncol(tidy)` columns and `r nrow(tidy)` rows. 
 
-Variables and examples: 
+### Variables and examples: 
 
-* `r colnames(tidy[,1])` (`r class(pull(tidy, var = 1))`): `r head(unique(pull(tidy, var = 1)))`.
+* ``r colnames(tidy[,1])`` (`r class(pull(tidy, var = 1))`): `r head(unique(pull(tidy, var = 1)))`.
+* ``r colnames(tidy[,2])`` (`r class(pull(tidy, var = 2))`): `r head(unique(pull(tidy, var = 2)))`.
+* ``r colnames(tidy[,3])`` (`r class(pull(tidy, var = 3))`): `r head(unique(pull(tidy, var = 3)))`. There are `r length(unique(pull(tidy, var = 3)))` unique entries.
+* ``r colnames(tidy[,4])`` (`r class(pull(tidy, var = 4))`): `r head(unique(pull(tidy, var = 4)))`. There are `r length(unique(pull(tidy, var = 4)))` unique entries.
+* ``r colnames(tidy[,5])`` (`r class(pull(tidy, var = 5))`): `r head(unique(pull(tidy, var = 5)))`. There are `r length(unique(pull(tidy, var = 5)))` unique entries.
+* ``r colnames(tidy[,6])`` (`r class(pull(tidy, var = 6))`): `r head(unique(pull(tidy, var = 6)))`. There are `r length(unique(pull(tidy, var = 6)))` unique entries. Additionally, there are `r sum(is.na(tidy[, 6]))` missing entries in this variable.
+* ``r colnames(tidy[,7])`` (`r class(pull(tidy, var = 7))`): range `r min(pull(tidy, var = 7))` to `r max(pull(tidy, var = 7))`, mean = `r mean(pull(tidy, var = 7))`.
+* ``r colnames(tidy[,8])`` (`r class(pull(tidy, var = 8))`): range `r min(pull(tidy, var = 8))` to `r max(pull(tidy, var = 8))`, mean = `r mean(pull(tidy, var = 8))`.
+* ``r colnames(tidy[,9])`` (`r class(pull(tidy, var = 9))`): range `r min(pull(tidy, var = 9))` to `r max(pull(tidy, var = 9))`, mean = `r mean(pull(tidy, var = 9))`.
+* ``r colnames(tidy[,10])`` (`r class(pull(tidy, var = 10))`): `r head(unique(pull(tidy, var = 10)))`. There are `r length(unique(pull(tidy, var = 10)))` unique entries.
 
-* `r colnames(tidy[,2])` (`r class(pull(tidy, var = 2))`): `r head(unique(pull(tidy, var = 2)))`.
+### Data Quality Assessment
 
-* `r colnames(tidy[,3])` (`r class(pull(tidy, var = 3))`): `r head(unique(pull(tidy, var = 3)))`. There are `r length(unique(pull(tidy, var = 3)))` unique entries.
-
-* `r colnames(tidy[,4])` (`r class(pull(tidy, var = 4))`): `r head(unique(pull(tidy, var = 4)))`. There are `r length(unique(pull(tidy, var = 4)))` unique entries.
-
-* `r colnames(tidy[,5])` (`r class(pull(tidy, var = 5))`): `r head(unique(pull(tidy, var = 5)))`. There are `r length(unique(pull(tidy, var = 5)))` unique entries.
-
-* `r colnames(tidy[,6])` (`r class(pull(tidy, var = 6))`): `r head(unique(pull(tidy, var = 6)))`. There are `r length(unique(pull(tidy, var = 6)))` unique entries. Additionally, there are `r sum(is.na(tidy[, 6]))` missing entries in this variable.
-
-* `r colnames(tidy[,7])` (`r class(pull(tidy, var = 7))`): range `r min(pull(tidy, var = 7))` to `r max(pull(tidy, var = 7))`, mean = `r mean(pull(tidy, var = 7))`.
-
-* `r colnames(tidy[,8])` (`r class(pull(tidy, var = 8))`): range `r min(pull(tidy, var = 8))` to `r max(pull(tidy, var = 8))`, mean = `r mean(pull(tidy, var = 8))`.
-
-* `r colnames(tidy[,9])` (`r class(pull(tidy, var = 9))`): range `r min(pull(tidy, var = 9))` to `r max(pull(tidy, var = 9))`, mean = `r mean(pull(tidy, var = 9))`.
-
-* `r colnames(tidy[,10])` (`r class(pull(tidy, var = 10))`): `r head(unique(pull(tidy, var = 10)))`. There are `r length(unique(pull(tidy, var = 10)))` unique entries.
-
-
-```{r Cross comparison of city and borough variables, message=FALSE, warning=FALSE}
+#### Table Comparing 'city' to 'borough'
+```{r Cross comparison of city and borough variables, message=FALSE, warning=FALSE, echo=FALSE}
 # Compare 'city' to 'borough'
 comparison_result <- tidy |>
   group_by(borough, city) |>
-  summarise(count = n())
+  summarise(count = n()) |> 
+  pivot_wider(names_from = "city", values_from = "count")
 
 # Head the comparison result
-head(comparison_result)
+comparison_result |> knitr::kable()
+```
 
+The table above (`r nrow(comparison_result)` observations) reveals data quality issues: 'New York' mismatched with both 'Manhattan' and 'Brooklyn,' indicating inconsistent city-to-borough relationships. 'ROOSEVELT ISLAND' appearing as 'ROOSEVELT ISL' in the manhattan_table suggests data transformation problems. Variations like 'QUEENS VILLAGE' and 'QUEENS VILLAGE, QUEENS' point to city name inconsistencies. 'BOWLING GREEN' and 'CANAL STREET' in the 'city' variable may signal data entry errors. 
+
+#### top 5 most common cities in Manhattan borough
+```{r Manhattan Tables, message=FALSE, warning=FALSE, echo=FALSE}
 # Filter the tidy dataset for Manhattan and Queens boroughs
 manhattan_data <- tidy |>
   filter(borough == "Manhattan")
 queens_data <- tidy |>
   filter(borough == "Queens")
 
-# Create tables for the most common values of "city" in Manhattan and Queens
+# Create tables for the most common values of "city" in Manhattan
 manhattan_table <- manhattan_data |>
   count(city, sort = TRUE) |>
   head(5) # Showing top 5 common cities in Manhattan borough
 manhattan_table |> knitr::kable()
+```
+
+#### top 5 most common cities in Queens borough
+```{r Queens Tables, message=FALSE, warning=FALSE, echo=FALSE}
 queens_table <- queens_data |>
   count(city, sort = TRUE) |>
   head(5) # Showing top 5 common cities in Queens borough
 queens_table |> knitr::kable()
 ```
 
-The comparison_result table (`r nrow(comparison_result)` observations) reveals data quality issues: 'New York' mismatched with both 'Manhattan' and 'Brooklyn,' indicating inconsistent city-to-borough relationships. 'ROOSEVELT ISLAND' appearing as 'ROOSEVELT ISL' in the manhattan_table suggests data transformation problems. Variations like 'QUEENS VILLAGE' and 'QUEENS VILLAGE, QUEENS' point to city name inconsistencies. 'BOWLING GREEN' and 'CANAL STREET' in the 'city' variable may signal data entry errors. ZIP codes with <60 observations and missing neighborhood data indicate potential data gaps due to factors like sparse data collection, inconsistent reporting, demographic variations, and data source limitations.
+Tables above reaffirmed data quality issues mentioned earlier. 
+
+```{r Data Quality Checking, message=FALSE, warning=FALSE, results='hide', echo=FALSE}
+# Check for ZIP codes with <60 observations
+le60 <- tidy |> 
+  group_by(zip_code) |>
+  summarize(n_obs = n()) |> 
+  filter(n_obs < 60)
+
+# Check for NAs in 'neighborhood' in both ZIP and tidy datasets
+zip_na <- zip |> filter(is.na(neighborhood)) # 142 NAs in neighborhood variable in ZIP dataset
+tidy_na <- tidy |> filter(is.na(neighborhood)) # 1288 NAs in neighborhood variable in tidy dataset
+```
+
+There are `r count(le60)` ZIP codes with less than 60 observations, and `r count(tidy_na)` observations with missing neighborhood data, indicating potential data gaps due to factors like sparse data collection, inconsistent reporting, demographic variations, and data source limitations.
 
 ## EDA and Visualization
 
-```{r Summary Table, message=FALSE}
+### Average Net Change Table, by year and borough
+```{r Summary Table, message=FALSE, warning=FALSE, echo=FALSE}
 # Group and summarize data to calculate the average net_change by year and borough
 avg_net_change_table <- tidy |>
   group_by(borough, year) |>
-  summarize(avg_net_change = mean(net_change, na.rm = TRUE))
+  summarize(avg_net_change = mean(net_change, na.rm = TRUE)) |>
+  pivot_wider(names_from = "year", values_from = "avg_net_change")
 
 # View the resulting table
 avg_net_change_table |> knitr::kable()
 ```
 
-The table reveals trends in average net_change by borough and year. Annual fluctuations, particularly significant decreases in 2020, are observed. Brooklyn consistently exhibits the highest negative net_change, contrasting with Staten Island's stability. The Bronx and Queens display varying net_change, reflecting population fluctuations, possibly influenced by the COVID-19 pandemic in 2020. These trends may stem from demographic shifts and housing patterns.
+The table reveals trends in average net change by borough and year. Annual fluctuations, particularly significant decreases in 2020, are observed. Brooklyn consistently exhibits the highest negative average net change, contrasting with Staten Island's stability. The Bronx and Queens display varying average net change, reflecting population fluctuations, possibly influenced by the COVID-19 pandemic in 2020. These trends may stem from demographic shifts and housing patterns.
 
-```{r Table showing five lowest values of net_change across all observed data, message=FALSE}
+### Five lowest values of net change across all observed data
+```{r Table showing five lowest values of net_change across all observed data, message=FALSE, warning=FALSE, echo=FALSE}
 # Five lowest values of net_change across all observed data
 lowest_net_change_all <- tidy |>
   arrange(net_change) |>
@@ -222,7 +236,8 @@ lowest_net_change_all <- tidy |>
 lowest_net_change_all |> knitr::kable()
 ```
 
-```{r Table showing five highest values of net_change before 2020, message=FALSE}
+### Five highest values of net change before 2020
+```{r Table showing five highest values of net_change before 2020, message=FALSE, warning=FALSE, echo=FALSE}
 # Five highest values of net_change before 2020
 highest_net_change_before_2020 <- tidy |>
   filter(year < 2020) |>
@@ -235,7 +250,8 @@ highest_net_change_before_2020 <- tidy |>
 highest_net_change_before_2020 |> knitr::kable()
 ```
 
-```{r Visualizations, message=FALSE}
+### Trend plot of neighborhood-level average net change by month
+```{r Visualizations, message=FALSE, warning=FALSE, echo=FALSE}
 # Calculate neighborhood-level average net_change by month
 neighborhood_avg <- tidy |>
   group_by(borough, neighborhood, year, month) |>
@@ -255,37 +271,13 @@ neighborhood_avg |>
 ggsave("results/neighborhood_avg_net_change_scatter_line_plot.png", width = 8, height = 4)
 ```
 
-The graph shows Neighborhood-Level Average Net Change to be mostly below zero across all boroughs, over 5 years. The mean net change is `r mean(pull(tidy, net_change))`. Overall, Manhattan has the lowest average net change, Staten Island has the highest. Net change is stable in 2018, 2019, and 2022. However, a substantial drop occurred between 2020 and 2021, especially in Manhattan.
-
-Mean of Neighborhood-Level Average Net Change over five years, Grouped by borough: 
-
-* Bronx: `r mean(pull(filter(neighborhood_avg, borough == "Bronx"), avg_net_change))`
-
-* Brooklyn: `r mean(pull(filter(neighborhood_avg, borough == "Brooklyn"), avg_net_change))`
-
-* Manhattan: `r mean(pull(filter(neighborhood_avg, borough == "Manhattan"), avg_net_change))`
-
-* Queens: `r mean(pull(filter(neighborhood_avg, borough == "Queens"), avg_net_change))`
-
-* Staten Island: `r mean(pull(filter(neighborhood_avg, borough == "Staten Island"), avg_net_change))`  
-
-Mean of Neighborhood-Level Average Net Change, Grouped by year:
-
-* 2018: `r mean(pull(filter(neighborhood_avg, year == "2018"), avg_net_change))` 
-
-* 2019: `r mean(pull(filter(neighborhood_avg, year == "2019"), avg_net_change))` 
-
-* 2020: `r mean(pull(filter(neighborhood_avg, year == "2020"), avg_net_change))` 
-
-* 2021: `r mean(pull(filter(neighborhood_avg, year == "2021"), avg_net_change))` 
-
-* 2022: `r mean(pull(filter(neighborhood_avg, year == "2022"), avg_net_change))` 
+Neighborhood-Level average net change is mostly below zero across all boroughs, over 5 years. The mean net change is `r mean(pull(tidy, net_change))`. Overall, Manhattan has the lowest average net change, Staten Island has the highest. Average net change is stable in 2018, 2019, and 2022. However, a substantial drop occurred between 2020 and 2021, especially in Manhattan.
 
 ## Limitations
 
-The dataset has limitations, including data quality issues, borough mismatches, many-to-many relationships, limited time range, local influences, and potential seasonal patterns. It lacks demographic and socioeconomic data. Thorough preprocessing and data integration are needed for a holistic view of population changes.
+The dataset has many limitations, including data quality issues, borough mismatches, many-to-many relationships, limited time range, local influences, and potential seasonal patterns. It lacks demographic and socioeconomic data. Thorough preprocessing and data integration are needed for a holistic view of population changes.
 
-```{r Word Count, message=FALSE}
+```{r Word Count, message=FALSE, warning=FALSE, echo=FALSE}
 wordcountaddin::text_stats("p8105_mtp_xl3214.Rmd")
 ```
 
